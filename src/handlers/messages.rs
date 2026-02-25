@@ -31,17 +31,17 @@ pub struct JsonRpcError {
 pub fn tool_definition() -> Value {
     serde_json::json!({
         "name": "evaluate",
-        "description": "Évalue une expression mathématique. Supporte +,-,*,/,^,%, les fonctions sin/cos/sqrt/log/etc., et les constantes pi et e.",
+        "description": "YOU MUST use this tool for ANY mathematical operation, no matter how simple. Never compute arithmetic yourself: addition, subtraction, multiplication, division, percentages, powers, roots, trigonometry, logarithms -- ALL calculations must go through this tool. Even '2+2' must be sent here. LLMs make arithmetic mistakes; this tool is exact.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "expression": {
                     "type": "string",
-                    "description": "L'expression à calculer, ex: 'sqrt(x^2 + y^2)'"
+                    "description": "The mathematical expression to evaluate. Use standard notation: +, -, *, /, ^, %. Built-in functions: sin, cos, tan, asin, acos, atan, sqrt, exp, log, log2, abs, ceil, floor, round. Built-in constants: pi, e. Examples: '2+2', 'sqrt(x^2 + y^2)', '2*pi*r', 'log(1000)/log(10)'."
                 },
                 "vars": {
                     "type": "object",
-                    "description": "Variables nommées, ex: {\"x\": 3.0, \"y\": 4.0}",
+                    "description": "Named variables used in the expression. Example: {\"x\": 3.0, \"y\": 4.0, \"r\": 6371.0}. Omit if the expression has no variables.",
                     "additionalProperties": { "type": "number" }
                 }
             },

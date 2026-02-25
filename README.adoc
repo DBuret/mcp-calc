@@ -113,7 +113,7 @@ Add the server to your MCP client configuration. Example for **LM Studio** (`mcp
 {
   "mcpServers": {
     "math": {
-      "command": "/absolute/path/to/mcp-math"
+      "url": "http://YOUR_HOST:3000/sse"
     }
   }
 }
