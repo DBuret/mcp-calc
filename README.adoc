@@ -1,4 +1,4 @@
-= MCP Math Server
+= MCP CALC Server : mathematical expression evaluator
 v0.1.0
 :description: A high-performance stdio MCP server for mathematical expression evaluation.
 :icons: font
@@ -7,6 +7,8 @@ v0.1.0
 :sectnums:
 :imagesdir: images
 
+image:https://img.shields.io/docker/v/davidburet/mcp-calc[Version]
+image:https://img.shields.io/docker/image-size/davidburet/mcp-calc/latest[Size]
 image:https://img.shields.io/badge/Rust-2024-orange.svg[Rust Version]
 image:https://img.shields.io/badge/License-MIT-blue.svg[License]
 
@@ -14,20 +16,20 @@ image:https://img.shields.io/badge/License-MIT-blue.svg[License]
 [cols="2,10",frame=none]
 |===
 |image:logo-128.png[MCP Calc Logo,width=200]
-|An implementation of the **Model Context Protocol (MCP)** that gives AI agents a reliable mathematical expression evaluator. Built with Rust for speed, correctness, and a minimal footprint.
+|An implementation of the **Model Context Protocol (MCP)** (over network with SSE, not stdio) that gives AI agents a reliable mathematical expression evaluator. Built with Rust for speed, correctness, and a minimal footprint.
 
 Unlike using the LLM's own arithmetic, this server computes results **exactly** using a dedicated expression engine -- no hallucinated digits, no floating-point approximation surprises.
 |===
 
 toc::[]
 
-NOTE: This server uses **stdio** transport, which is the standard for local MCP servers launched directly by the AI client as a child process.
-
 == Why This Exists
 
 LLMs are notoriously unreliable for arithmetic: rounding errors, wrong operator precedence, silent mistakes on large numbers or complex expressions. This server offloads all calculations to a deterministic Rust engine.
 
 == Features
+
+NOTE: We use the https://crates.io/crates/mathexpr[mathexpr Rust crate]
 
 * **Expression evaluation**: Arithmetic, powers, modulo, parentheses.
 * **27 built-in functions**: `sin`, `cos`, `tan`, `sqrt`, `log`, `abs`, `ceil`, `floor`, `round`, and more.
