@@ -1,5 +1,5 @@
 = MCP CALC Server : mathematical expression evaluator
-v0.1.0
+v0.2.0
 :description: A high-performance stdio MCP server for mathematical expression evaluation.
 :icons: font
 :toc: left
@@ -17,7 +17,12 @@ image:https://img.shields.io/badge/License-MIT-blue.svg[License]
 [cols="2,10",frame=none]
 |===
 |image:logo-128.png[MCP Calc Logo,width=200]
-|An implementation of the **Model Context Protocol (MCP)** (over network with SSE, not stdio) that gives AI agents a reliable mathematical expression evaluator. Built with Rust for speed, correctness, and a minimal footprint.
+a|An implementation of the **Model Context Protocol (MCP)** that gives AI agents a reliable mathematical expression evaluator. Built with Rust for speed, correctness, and a minimal footprint.
+
+Unlike standard MCP servers using `stdio`, this bridge operates over the network:
+
+* **SSE (Server-Sent Events)** with a **Hybrid Response** mode, making it compatible with  clients like LM Studio.
+* **Standard HTTP (Synchronous)**: The modern MCP standard using a single `POST /mcp` endpoint. Open WebUI needs this
 
 Unlike using the LLM's own arithmetic, this server computes results **exactly** using a dedicated expression engine -- no hallucinated digits, no floating-point approximation surprises.
 |===
