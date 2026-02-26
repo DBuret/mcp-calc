@@ -2,10 +2,11 @@
 v0.1.0
 :description: A high-performance stdio MCP server for mathematical expression evaluation.
 :icons: font
-:toc: macro
+:toc: left
 :toc-title: Table of Contents
 :sectnums:
 :imagesdir: images
+:source-highlighter: highlight.js
 
 image:https://img.shields.io/docker/v/davidburet/mcp-calc[Version]
 image:https://img.shields.io/docker/image-size/davidburet/mcp-calc/latest[Size]
@@ -55,18 +56,16 @@ The server exposes a single tool:
 
 Simple constant expression:
 [source,json]
-----
 {
   "name": "evaluate",
   "arguments": {
     "expression": "2 * pi * 6371"
   }
 }
-----
+
 
 With named variables:
 [source,json]
-----
 {
   "name": "evaluate",
   "arguments": {
@@ -74,7 +73,7 @@ With named variables:
     "vars": { "x": 3.0, "y": 4.0 }
   }
 }
-----
+
 
 Result: `5.0`
 
@@ -82,10 +81,8 @@ Result: `5.0`
 
 Requires Rust 1.85+ (Edition 2024).
 
-[source,bash]
-----
+[source,console]
 cargo build --release
-----
 
 The binary will be at `./target/release/mcp-math`.
 
@@ -95,12 +92,29 @@ The binary will be at `./target/release/mcp-math`.
 |===
 | Variable | Description | Default
 
-| `MCP_CALC_LOG`
+| MCP_CALC_LOG
 | Log level (`debug`, `info`, `warn`, `error`)
 | `info`
+
+| MCP_CALC_PORT
+| port to listen to
+| 3000
 |===
 
 Setting `MCP_CALC_LOG=debug` enables cache hit/miss traces and variable binding details -- useful during development.
+
+== Run
+
+[source,console]
+docker run --rm -d \
+  --name mcp-calc \
+  -p 3003:1234 \
+  -e MCP_CALC_LOG="debug" \
+  -e MCP_CALC_PORT="1234" \
+  davidburet/mcp-calc:latest
+
+
+
 
 == Connecting to an AI Client
 
@@ -112,7 +126,6 @@ Add the server to your MCP client configuration. Example for **LM Studio** (`mcp
 ** Linux: `~/.config/lmstudio/mcp.json`
 
 [source,json]
-----
 {
   "mcpServers": {
     "math": {
@@ -120,7 +133,7 @@ Add the server to your MCP client configuration. Example for **LM Studio** (`mcp
     }
   }
 }
-----
+
 
 TIP: Use the **release build** in production. The debug build is significantly slower for expression compilation.
 
@@ -128,7 +141,7 @@ TIP: Use the **release build** in production. The debug build is significantly s
 
 [source]
 ----
-mcp-math/
+mcp-calc/
 ├── Cargo.toml
 └── src/
     ├── main.rs        # stdio loop, tracing init, request dispatch
