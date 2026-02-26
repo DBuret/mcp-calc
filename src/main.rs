@@ -16,11 +16,12 @@ use axum::{
     routing::{get, post},
 };
 use futures::stream::{self, Stream};
+use serde_json::json;
 use serde_json::Value;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::broadcast;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info};
+use tracing::{error, debug, warn, info};
 
 use crate::state::AppState;
 
@@ -36,6 +37,7 @@ async fn main() {
         .route("/health", get(|| async { "OK" }))
         .route("/sse", get(sse_handler).post(messages_handler))
         .route("/messages", post(messages_handler))
+        .route("/mcp", post(mcp_handler))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
@@ -131,4 +133,51 @@ async fn messages_handler(
     });
 
     StatusCode::ACCEPTED.into_response()
+}
+
+async fn mcp_handler(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<JsonRpcRequest>,
+) -> impl IntoResponse {
+    let method = payload.method.clone();
+    let request_id = payload.id.clone().unwrap_or(Value::Null);
+    
+    debug!("MCP /mcp called: method={}, id={:?}", method, request_id);
+
+    if method == "initialize" {
+        info!("Handling initialize (Streamable HTTP)");
+        let result = mcp::handle_init_result();
+        let response = serde_json::json!({"jsonrpc": "2.0", "id": request_id, "result": result});
+        return Json(response).into_response();
+    }
+
+    // Sync tools pour math (pas besoin SSE)
+    let result = match method.as_str() {
+        "tools/list" => {
+            info!("Handling tools/list (Streamable HTTP)");
+            mcp::handle_list_tools_result()
+        }
+        "tools/call" => {
+            info!("Handling tools/call (Streamable HTTP)");
+            // Sync pour v0.2 (pas spawn SSE)
+            let mut math_state = state.math_state.lock().await;
+            mcp::handle_call_tool_result(payload.params.clone(), &mut math_state)
+        }
+        "notifications/initialized" => {
+            json!({"jsonrpc": "2.0", "id": null})
+        }
+
+        _ => {
+            warn!("Unsupported method: {}", method);
+            let err = serde_json::json!({
+                "isError": true,
+                "content": [{"type": "text", "text": format!("Method not supported: {}", method)}]
+            });
+            err
+        }
+    };
+
+    let response = serde_json::json!({"jsonrpc": "2.0", "id": request_id, "result": result});
+    debug!("MCP response sent: {:?}", response);
+    Json(response).into_response()
 }

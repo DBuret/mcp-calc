@@ -3,9 +3,10 @@ use crate::handlers::messages::tool_definition;
 use crate::state::MathState;
 use mathexpr::Expression;
 use serde_json::Value;
-use tracing::{debug, error, info};
+use tracing::{debug, error, warn, info};
 
 pub fn handle_initialize_result() -> Value {
+        debug!("handle_initialize_result called");
     serde_json::json!({
         "protocolVersion": "2024-11-05",
         "capabilities": { "tools": { "listChanged": false } },
@@ -109,3 +110,20 @@ fn error_guidance(e: &AppError) -> String {
         _ => format!("Internal error: {}. Please retry.", e),
     }
 }
+
+
+
+pub fn handle_init_result() -> Value {  
+    info!("MCP initialize called");
+    serde_json::json!({
+        "protocolVersion": "2025-11-25",  
+        "capabilities": {
+            "tools": {}
+        },
+        "serverInfo": {
+            "name": "mcp-math",
+            "version": "0.2.0"
+        }
+    })
+}
+
