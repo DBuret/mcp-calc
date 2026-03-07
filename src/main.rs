@@ -102,13 +102,16 @@ async fn messages_handler(
                 info!("Client initialized");
                 return;
             }
-            other => {
-                tracing::warn!(method = %other, "Method not supported");
-                serde_json::json!({
-                    "isError": true,
-                    "content": [{ "type": "text", "text": format!("Method {} not supported", other) }]
-                })
-            }
+other => {
+    warn!(method = %other, "Method not supported");
+    // Pour SSE, on envoie quand même une erreur JSON-RPC via le channel
+    serde_json::json!({
+        "error": {
+            "code": -32601,
+            "message": format!("Method not found: {}", other)
+        }
+    })
+}
         };
 
         let response = serde_json::json!({
@@ -152,30 +155,44 @@ async fn mcp_handler(
     }
 
     // Sync tools pour math (pas besoin SSE)
-    let result = match method.as_str() {
-        "tools/list" => {
-            info!("Handling tools/list (Streamable HTTP)");
-            mcp::handle_list_tools_result()
-        }
-        "tools/call" => {
-            info!("Handling tools/call (Streamable HTTP)");
-            // Sync pour v0.2 (pas spawn SSE)
-            let mut math_state = state.math_state.lock().await;
-            mcp::handle_call_tool_result(payload.params.clone(), &mut math_state)
-        }
-        "notifications/initialized" => {
-            json!({"jsonrpc": "2.0", "id": null})
-        }
+let result = match method.as_str() {
+    "tools/list" => {
+        info!("Handling tools/list (Streamable HTTP)");
+        mcp::handle_list_tools_result()
+    }
+    "tools/call" => {
+        info!("Handling tools/call (Streamable HTTP)");
+        let mut math_state = state.math_state.lock().await;
+        mcp::handle_call_tool_result(payload.params.clone(), &mut math_state)
+    }
 
-        _ => {
-            warn!("Unsupported method: {}", method);
-            let err = serde_json::json!({
-                "isError": true,
-                "content": [{"type": "text", "text": format!("Method not supported: {}", method)}]
-            });
-            err
-        }
-    };
+    // ✅ FIX 1 : ping → résultat vide selon spec MCP
+    "ping" => {
+        info!("Handling ping");
+        json!({})
+    }
+
+    // ✅ FIX 2 : notifications → pas de réponse (pas d'id)
+    "notifications/initialized" => {
+        info!("Client initialized (Streamable HTTP)");
+        return StatusCode::ACCEPTED.into_response();
+    }
+
+    // ✅ FIX 3 : méthode inconnue → erreur JSON-RPC (champ error, pas result)
+    _ => {
+        warn!("Unsupported method: {}", method);
+        let error_response = json!({
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {
+                "code": -32601,
+                "message": format!("Method not found: {}", method)
+            }
+        });
+        return Json(error_response).into_response();
+    }
+};
+
 
     let response = serde_json::json!({"jsonrpc": "2.0", "id": request_id, "result": result});
     debug!("MCP response sent: {:?}", response);
